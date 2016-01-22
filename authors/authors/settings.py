@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'books',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -118,4 +120,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
+STATIC_ROOT = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'static/')
 STATIC_URL = '/static/'
+MEDIA_ROOT = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'media/files/')
+MEDIA_URL = ''

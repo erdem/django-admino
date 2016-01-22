@@ -1,0 +1,9 @@
+env/
+*.log
+*.pot
+*.pyc
+*.swp
+.DS_Store
+.idea
+.vagrant
+db.sqlite3

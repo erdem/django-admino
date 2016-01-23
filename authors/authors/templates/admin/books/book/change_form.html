@@ -56,15 +56,12 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function(){
-            $(document).on("keypress", function(e){
-                var code = e.keyCode || e.which;
-                if (code == 13 || code == 40 || code == 38){
-                    return false;
-                }
-                if (code == 103){
-                    activate_easy_out();
-                }
-            });
+{#            $(document).on("keypress", function(e){#}
+{#                var code = e.keyCode || e.which;#}
+{#                if (code == 103){#}
+{#                    activate_easy_out();#}
+{#                }#}
+{#            });#}
             $(".easy-go-btn").on("click", function(){
                 activate_easy_out();
             });

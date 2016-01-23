@@ -14,10 +14,10 @@ class AuthorAdmin(admin.ModelAdmin):
 
 
 class BookAdmin(admin.ModelAdmin):
+    easy_go = True
     list_display = ("name", "author", "is_visible")
     list_filter = ("author", "is_visible")
     search_fields = ("name", "author__name")
-    list_per_page = 2
 
 
 

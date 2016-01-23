@@ -1,20 +1,22 @@
 from functools import update_wrapper
+import json
 from django import http
 from django.conf import settings
-from django.conf.urls import patterns, url
 from django.contrib.admin import AdminSite, ModelAdmin
 from django.core import serializers
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import RedirectView
+from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(object):
+class AdminoMixin(ModelAdmin):
 
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
     def get_urls(self):
         from django.conf.urls import url
+        urls = super(AdminoMixin, self).get_urls()
+
         def wrap(view):
             def wrapper(*args, **kwargs):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
@@ -24,28 +26,14 @@ class AdminoMixin(object):
         info = self.model._meta.app_label, self.model._meta.model_name
 
         urlpatterns = [
-            url(r'^$', wrap(self.changelist_view), name='%s_%s_changelist' % info),
             url(r'^api/$',
-                csrf_exempt(wrap(self.admin_site.admin_view(self.api_list_view))),
+                csrf_exempt(wrap(self.admin_site.admin_view(self.dispatch))),
                 name='%s_%s_api_list' % info),
-            url(r'^api/(?P<id>[-\d]+)/$',
-                csrf_exempt(wrap(self.admin_site.admin_view(self.api_detail_view))),
+            url(r'^api/(?P<pk>[-\d]+)/$',
+                csrf_exempt(wrap(self.admin_site.admin_view(self.dispatch))),
                 name='%s_%s_api_detail' % info),
-            url(r'^add/$', wrap(self.add_view), name='%s_%s_add' % info),
-            url(r'^(.+)/history/$', wrap(self.history_view), name='%s_%s_history' % info),
-            url(r'^(.+)/delete/$', wrap(self.delete_view), name='%s_%s_delete' % info),
-            url(r'^(.+)/change/$', wrap(self.change_view), name='%s_%s_change' % info),
-            # For backwards compatibility (was the change url before 1.9)
-            # url(r'^(.+)/$', wrap(RedirectView.as_view(
-            #     pattern_name='%s:%s_%s_change' % ((self.admin_site.name,) + info)
-            # ))),
         ]
-        return urlpatterns
-
-    def urls(self):
-        print "adminooooooo"
-        return self.get_urls()
-    urls = property(urls)
+        return urlpatterns + urls
 
     def _allowed_methods(self):
         return [m.upper() for m in self.http_method_names if hasattr(self, "api_" + m)]
@@ -55,32 +43,46 @@ class AdminoMixin(object):
             raise Exception("Only" + str(self._allowed_methods()))
         return http.HttpResponseNotAllowed(self._allowed_methods())
 
-    @csrf_exempt
-    def api_list_view(self, request, *args, **kwargs):
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(self, "api_" + request.method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
+    def dispatch(self, request, *args, **kwargs):
+        if not request.method.lower() in self.http_method_names:
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
+        handler = self.http_method_not_allowed
+        if request.method.lower() == "get":
+            handler = getattr(self, "api_get", self.http_method_not_allowed)
+
+        api_view_name = HTTP_METHOD_VIEWS.get(request.method.lower())
+        if api_view_name:
+            handler = getattr(self, "api_" + api_view_name, self.http_method_not_allowed)
+
         return handler(request, *args, **kwargs)
 
     def api_get(self, request, *args, **kwargs):
-        data = serializers.serialize("json", self.queryset(request))
-        return HttpResponse(data, mimetype="application/json")
+        if kwargs.get("pk"):
+            return self.api_detail(request, *args, **kwargs)
+        else:
+            return self.api_list(request, *args, **kwargs)
 
-    @csrf_exempt
-    def api_post(self, request, *args, **kwargs):
+    def api_list(self, request, *args, **kwargs):
+        data = serializers.serialize("json", self.get_queryset(request))
+        return HttpResponse(data, content_type="application/json")
+
+    def api_detail(self, request, *args, **kwargs):
+        obj = self.get_object(request, object_id=kwargs.get("pk"))
+        data = serializers.serialize('json', [obj,])
+        struct = json.loads(data)
+        data = json.dumps(struct[0])
+        return HttpResponse(data, content_type='application/json')
+
+    def api_create(self, request, *args, **kwargs):
         return HttpResponse("post")
 
-    @csrf_exempt
-    def api_put(self, request, *args, **kwargs):
+    def api_update(self, request, *args, **kwargs):
         return HttpResponse("put")
 
-    @csrf_exempt
     def api_delete(self, request, *args, **kwargs):
         return HttpResponse("delete")
 
-    def api_detail_view(self, request, *args, **kwargs):
-        return HttpResponse("detail")
 
 
 class ModelAdmino(AdminoMixin, ModelAdmin):

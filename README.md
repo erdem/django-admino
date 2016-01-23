@@ -9,8 +9,8 @@ Yapacağınız bazı custom çözümler, admin'nin template dosyalarının çok 
 
 Bu sorunu çözmek için django'nun admin uygulamasını extend edip, template ve static dosyaları ekleyrek bunu çözen paketler mevcuttur. 
 
-[django-suit](https://github.com/darklow/django-suit){: target=_blank}
-[django-jet](https://github.com/geex-arts/django-jet){: target=_blank}
+- [django-suit](https://github.com/darklow/django-suit)
+- [django-jet](https://github.com/geex-arts/django-jet)
 
 Bu çözümler django'nun "ModelAdmin" class'i üzerinde bir değişiklik yapamadıkları için, admin de özel çözüm getirmek bir yere kadar çözülüyor.
 

@@ -65,18 +65,52 @@ class AdminoMixin(ModelAdmin):
             return self.api_list(request, *args, **kwargs)
 
     def api_list(self, request, *args, **kwargs):
+
         data = serializers.serialize("json", self.get_queryset(request))
         return HttpResponse(data, content_type="application/json")
 
+    def changelist_view(self, request, extra_context=None):
+        return super(AdminoMixin, self).changelist_view(request, extra_context)
+
     def api_detail(self, request, *args, **kwargs):
         obj = self.get_object(request, object_id=kwargs.get("pk"))
-        data = serializers.serialize('json', [obj,])
-        struct = json.loads(data)
-        data = json.dumps(struct[0])
-        return HttpResponse(data, content_type='application/json')
+        ModelForm = self.get_form(request, obj=obj)
+        form = ModelForm(instance=obj)
+        data = self.form_as_dict(request, form)
+        return HttpResponse(json.dumps(data), content_type='application/json')
+
+    def form_as_dict(self, request, form):
+        obj = form.instance
+        bundle = dict()
+        form_fields = form._meta.fields
+        readonly_fields = self.get_readonly_fields(request, obj)
+        form_fields.extend(readonly_fields)
+        for field in form_fields:
+            if hasattr(obj, "id"):
+                bundle["id"] = getattr(obj, "id")
+
+            if hasattr(obj, field):
+                bundle[field] = getattr(obj, field)
+
+            if hasattr(self, field):
+                bundle[field] = getattr(self, field)
+
+        return bundle
 
     def api_create(self, request, *args, **kwargs):
-        return HttpResponse("post", content_type='application/json')
+        data = json.loads(request.body)
+
+        ModelForm = self.get_form(request, obj=None)
+        form = ModelForm(data=data, files=request.FILES)
+        if form.is_valid():
+            form.save()
+            data = self.form_as_dict(request, form)
+            return HttpResponse(json.dumps(data), content_type="application/json")
+        else:
+            errors = {
+                "errors": json.loads(form.errors.as_json())
+            }
+            return HttpResponse(json.dumps(errors), status=400, content_type="application/json")
 
     def api_update(self, request, *args, **kwargs):
         return HttpResponse("put")

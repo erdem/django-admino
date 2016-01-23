@@ -9,6 +9,7 @@ from django.contrib.admin.options import IncorrectLookupParameters
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse_lazy
+from django.db.models import ManyToManyField
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .constants import HTTP_METHOD_VIEWS
@@ -87,10 +88,13 @@ class AdminoMixin(ModelAdmin):
         readonly_fields = self.get_readonly_fields(request, obj)
         model_fields.extend(readonly_fields)
         model_fields.extend(self.list_display)
-
         for field in model_fields:
             if hasattr(obj, field):
-                bundle[field] = getattr(obj, field)
+                f = getattr(obj, field)
+                bundle[field] = unicode(f)
+                if field == "book_type":
+                    f = list(f.all().values_list("id", flat=True))
+                    bundle[field] = f
 
             if hasattr(self, field):
                 field_method = getattr(self, field)
@@ -98,7 +102,9 @@ class AdminoMixin(ModelAdmin):
                     bundle[field] = field_method(obj)
                 else:
                     bundle[field] = field_method
-
+        info = self.model._meta.app_label, self.model._meta.model_name
+        admin_detail_url = reverse_lazy("admin:%s_%s_change" % info, args=(obj.id,))
+        bundle["detail_page"] = str(admin_detail_url)
         return bundle
 
     def get_api_next_url(self, request, cl):

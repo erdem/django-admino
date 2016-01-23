@@ -24,10 +24,12 @@
             width: 0;
             display: none;
             height: 100%;
+            overflow: hidden;
+            display: inline-block;
         }
 
         .easy-go-input-wrap{
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         .easy-go .item{
@@ -39,13 +41,12 @@
             cursor: pointer;
         }
 
-        .easy-go .item:hover, .easy-go .item:active{
+        .easy-go .item:hover, .easy-go .item:active, .easy-go .item.active{
             background: #447e9b;
             color: #fff;
         }
 
         .easy-go.slide{
-            display: block;
             width: 25%;
         }
     </style>
@@ -55,18 +56,52 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function(){
-            activate_easy_out()
+            $(document).on("keypress", function(e){
+                var code = e.keyCode || e.which;
+                if (code == 13 || code == 40 || code == 38){
+                    return false;
+                }
+                if (code == 103){
+                    activate_easy_out();
+                }
+            });
             $(".easy-go-btn").on("click", function(){
                 activate_easy_out();
             });
         });
 
         function activate_easy_out(){
+
             $("#content-main").toggleClass("slide");
             $(".easy-go").toggleClass("slide");
             var input = $(".easy-go-input");
+            if (!$(".easy-go").hasClass("slide")){
+                input.blur()
+                return false
+            }
+            $.ajax({
+                type: 'GET',
+                url: "/admin/books/book/api/",
+                dataType: "json",
+                success: function(data){
+                    $(".easy-go .item").remove();
+                    $.each(data.results, function(i, item){
+                        var result_item = $("<a\>", {"href": item.detail_page, "class": "item"}).text(item.name).clone()
+                        console.log(result_item);
+                        $(".easy-go").append(result_item);
+                        $(".easy-go .item").first().addClass("active")
+
+                    });
+                }
+            });
             input.focus();
+
+
             input.on("keyup", function(e){
+                var code = e.keyCode || e.which;
+                if (code == 13 || code == 40 || code == 38){
+                    return false;
+                }
                 var val = $(e.target).val();
                 $.ajax({
                     type: 'GET',
@@ -76,12 +111,35 @@
                     },
                     dataType: "json",
                     success: function(data){
-                        console.log(data);
+                    $(".easy-go .item").remove();
+                    $.each(data.results, function(i, item){
+                        var result_item = $("<a\>", {"href": item.detail_page, "class": "item"}).text(item.name).clone()
+                        console.log(result_item);
+                        $(".easy-go").append(result_item);
+                        $(".easy-go .item").first().addClass("active")
+
+                    });
                     }
                 });
             });
 
+            input.on("keydown", function(e){
+                var code = e.keyCode || e.which;
+                if(code == 13) {
+                    window.location.href = $(".easy-go .item.active").attr("href");
+                }
 
+                var current_item = $(".easy-go .item.active");
+                if (code == 40){
+                    $(".easy-go .item").removeClass("active");
+                    current_item.next().addClass("active");
+                }
+
+                if (code == 38){
+                    $(".easy-go .item").removeClass("active");
+                    current_item.prev().addClass("active");
+                }
+            });
         }
 
     </script>
@@ -93,7 +151,6 @@
         <div class="easy-go-input-wrap">
             <input type="text" class="vTextField easy-go-input">
         </div>
-        <a class="item">George</a>
     </div>
     {{ block.super }}
 {% endblock %}

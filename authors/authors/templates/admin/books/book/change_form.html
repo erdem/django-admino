@@ -1,11 +1,100 @@
 {% extends "admin/change_form.html" %}
 
+{% block extrastyle %}
+    {{ block.super }}
+    <style type="text/css">
+        .easy-go-btn {
+            color: #447e9b;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #content-main{
+            transition: all 0.5s ease;
+            float: right;
+        }
+
+        #content-main.slide{
+            float: right;
+            width: 75%;
+        }
+
+        .easy-go {
+            transition: all 0.5s ease;
+            float: left;
+            width: 0;
+            display: none;
+            height: 100%;
+        }
+
+        .easy-go-input-wrap{
+            margin-bottom: 10px;
+        }
+
+        .easy-go .item{
+            width: 18em;
+            border-bottom: 1px solid #ccc;
+            border-top: 1px solid #ccc;
+            display: block;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .easy-go .item:hover, .easy-go .item:active{
+            background: #447e9b;
+            color: #fff;
+        }
+
+        .easy-go.slide{
+            display: block;
+            width: 25%;
+        }
+    </style>
+{% endblock %}
+
 {% block extrahead %}
     {{ block.super }}
     <script type="text/javascript">
         $(function(){
-
+            activate_easy_out()
+            $(".easy-go-btn").on("click", function(){
+                activate_easy_out();
+            });
         });
+
+        function activate_easy_out(){
+            $("#content-main").toggleClass("slide");
+            $(".easy-go").toggleClass("slide");
+            var input = $(".easy-go-input");
+            input.focus();
+            input.on("keyup", function(e){
+                var val = $(e.target).val();
+                $.ajax({
+                    type: 'GET',
+                    url: "/admin/books/book/api/",
+                    data: {
+                        "q" : val
+                    },
+                    dataType: "json",
+                    success: function(data){
+                        console.log(data);
+                    }
+                });
+            });
+
+
+        }
+
     </script>
+{% endblock %}
+
+{% block content %}
+    <a class="easy-go-btn">Easy Go</a>
+    <div class="easy-go">
+        <div class="easy-go-input-wrap">
+            <input type="text" class="vTextField easy-go-input">
+        </div>
+        <a class="item">George</a>
+    </div>
+    {{ block.super }}
 {% endblock %}
 

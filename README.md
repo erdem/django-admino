@@ -97,7 +97,7 @@ admin.py
         search_fields = ("name", "author__name")
 
 
-![](http://oi64.tinypic.com/34dnl.jpg)
+![](http://oi64.tinypic.com/2u783ds.jpg)
   
 
 

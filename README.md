@@ -81,8 +81,24 @@ settigns.py
 
     ADMINO_MIXIN_CLASS = "app.module.AdminMixinClass"
     
-
     
+#### FEATURES
+
+###### easy_go
+
+easy_go bir admin detail sayfasındayken admino, list sayfasina gitmeden sizi gitmek istediğiniz data detayına ulaştırır.
+
+admin.py
+
+    class BookAdmin(admin.ModelAdmin):
+        easy_go = True
+        list_display = ("name", "author", "is_visible")
+        list_filter = ("author", "is_visible")
+        search_fields = ("name", "author__name")
+
+
+![](http://oi64.tinypic.com/34dnl.jpg)
+  
 
 
 

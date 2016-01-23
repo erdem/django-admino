@@ -27,10 +27,10 @@ class AdminoMixin(ModelAdmin):
 
         urlpatterns = [
             url(r'^api/$',
-                csrf_exempt(wrap(self.admin_site.admin_view(self.dispatch))),
+                wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_list' % info),
             url(r'^api/(?P<pk>[-\d]+)/$',
-                csrf_exempt(wrap(self.admin_site.admin_view(self.dispatch))),
+                wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_detail' % info),
         ]
         return urlpatterns + urls
@@ -43,6 +43,7 @@ class AdminoMixin(ModelAdmin):
             raise Exception("Only" + str(self._allowed_methods()))
         return http.HttpResponseNotAllowed(self._allowed_methods())
 
+    @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         if not request.method.lower() in self.http_method_names:
             return self.http_method_not_allowed(request, *args, **kwargs)
@@ -75,7 +76,7 @@ class AdminoMixin(ModelAdmin):
         return HttpResponse(data, content_type='application/json')
 
     def api_create(self, request, *args, **kwargs):
-        return HttpResponse("post")
+        return HttpResponse("post", content_type='application/json')
 
     def api_update(self, request, *args, **kwargs):
         return HttpResponse("put")

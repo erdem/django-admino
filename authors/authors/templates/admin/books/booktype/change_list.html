@@ -1,0 +1,23 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script>
+        function anan(){
+            var data = {"name": "yay"};
+            $.ajax({
+                type: 'POST',
+                url: "/admin/books/booktype/api/",
+                data: data,
+                dataType: "json",
+                success: function(data){
+                    console.log(data);
+                }
+            });
+        }anan();
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/admin/books/booktype/api/", true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.send(JSON.stringify({"name": "yay"}));
+    </script>
+{% endblock %}

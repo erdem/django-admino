@@ -59,7 +59,9 @@ MIDDLEWARE_CLASSES = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(os.path.realpath(os.path.dirname(__file__)), 'templates/'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

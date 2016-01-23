@@ -17,8 +17,7 @@ from django.conf.urls import url
 from django.contrib import admin
 
 import admino
-admin.autodiscover_modules("admin", register_to=admino.site)
-
+admin.site = admino.site.activated(admin.site)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

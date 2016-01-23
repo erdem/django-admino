@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
+ROOT_URLCONF = 'authors.urls'
 # Application definition
 
 INSTALLED_APPS = [
@@ -54,7 +54,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'authors.urls'
+
 
 TEMPLATES = [
     {

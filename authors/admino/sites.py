@@ -3,7 +3,9 @@ import json
 from django import http
 from django.conf import settings
 from django.contrib.admin import AdminSite, ModelAdmin
+from django.contrib.admin.options import IncorrectLookupParameters
 from django.core import serializers
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .constants import HTTP_METHOD_VIEWS
@@ -64,38 +66,57 @@ class AdminoMixin(ModelAdmin):
         else:
             return self.api_list(request, *args, **kwargs)
 
+    def get_admin_cl(self, request):
+        ChangeList = self.get_changelist(request)
+        try:
+            cl = ChangeList(request, self.model, self.list_display,
+                self.list_display_links, self.list_filter, self.date_hierarchy,
+                self.search_fields, self.list_select_related, self.list_per_page,
+                self.list_max_show_all, self.list_editable, self)
+            return cl
+
+        except IncorrectLookupParameters:
+            raise Exception("IncorrectLookupParameters")
+
+    def obj_as_dict(self, request, obj):
+        bundle = dict()
+        model_fields = self.model._meta.get_all_field_names()
+        readonly_fields = self.get_readonly_fields(request, obj)
+        model_fields.extend(readonly_fields)
+        model_fields.extend(self.list_display)
+
+        for field in model_fields:
+            if hasattr(obj, field):
+                bundle[field] = getattr(obj, field)
+
+            if hasattr(self, field):
+                field_method = getattr(self, field)
+                if callable(field_method):
+                    bundle[field] = field_method(obj)
+                else:
+                    bundle[field] = field_method
+
+        return bundle
+
     def api_list(self, request, *args, **kwargs):
+        cl = self.get_admin_cl(request)
+        results = []
+        for obj in cl.result_list:
+            results.append(self.obj_as_dict(request, obj))
 
-        data = serializers.serialize("json", self.get_queryset(request))
-        return HttpResponse(data, content_type="application/json")
-
-    def changelist_view(self, request, extra_context=None):
-        return super(AdminoMixin, self).changelist_view(request, extra_context)
+        data = {
+            "count": cl.result_count,
+            "results": results
+        }
+        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
 
     def api_detail(self, request, *args, **kwargs):
         obj = self.get_object(request, object_id=kwargs.get("pk"))
         ModelForm = self.get_form(request, obj=obj)
         form = ModelForm(instance=obj)
-        data = self.form_as_dict(request, form)
-        return HttpResponse(json.dumps(data), content_type='application/json')
+        data = self.obj_as_dict(request, form.instance)
+        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
 
-    def form_as_dict(self, request, form):
-        obj = form.instance
-        bundle = dict()
-        form_fields = form._meta.fields
-        readonly_fields = self.get_readonly_fields(request, obj)
-        form_fields.extend(readonly_fields)
-        for field in form_fields:
-            if hasattr(obj, "id"):
-                bundle["id"] = getattr(obj, "id")
-
-            if hasattr(obj, field):
-                bundle[field] = getattr(obj, field)
-
-            if hasattr(self, field):
-                bundle[field] = getattr(self, field)
-
-        return bundle
 
     def api_create(self, request, *args, **kwargs):
         data = json.loads(request.body)
@@ -104,8 +125,8 @@ class AdminoMixin(ModelAdmin):
         form = ModelForm(data=data, files=request.FILES)
         if form.is_valid():
             form.save()
-            data = self.form_as_dict(request, form)
-            return HttpResponse(json.dumps(data), content_type="application/json")
+            data = self.obj_as_dict(request, obj=None)
+            return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
         else:
             errors = {
                 "errors": json.loads(form.errors.as_json())

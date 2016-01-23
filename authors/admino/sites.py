@@ -14,7 +14,6 @@ class AdminoMixin(object):
 
     def get_urls(self):
         from django.conf.urls import url
-        import ipdb;ipdb.set_trace()
         def wrap(view):
             def wrapper(*args, **kwargs):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
@@ -78,10 +77,6 @@ class AdminoMixin(object):
         return HttpResponse("detail")
 
 
-def mixin_factory(name, base_class, mixin):
-    return type(name, (base_class, mixin), {"admin_type": "admino"})
-
-
 class ModelAdmino(AdminoMixin, ModelAdmin):
     admin_type = "admino"
 
@@ -90,7 +85,7 @@ class AdminoSite(AdminSite):
 
     def register(self, model_or_iterable, admin_class=None, **options):
         if getattr(admin_class, "admin_type", "") != "admino":
-            admin_class = mixin_factory("AdminoModelAdmin", AdminoMixin, admin_class)
+            admin_class = type("ModelAdmino", (AdminoMixin, admin_class), {"admin_type": "admino"})
         return super(AdminoSite, self).register(model_or_iterable, admin_class, **options)
 
 site = AdminoSite()

@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from admino.sites import site
+
+import admino
+admin.autodiscover_modules("admin", register_to=admino.site)
 
 
 urlpatterns = [

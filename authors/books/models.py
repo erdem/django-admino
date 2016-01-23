@@ -25,6 +25,7 @@ class Book(models.Model):
     name = models.CharField(max_length=255)
     author = models.ForeignKey(Author)
     book_type = models.ManyToManyField(BookType)
+    is_visible = models.BooleanField(default=False)
 
     def __unicode__(self):
         return smart_unicode(self.name)

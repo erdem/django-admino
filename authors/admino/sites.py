@@ -35,7 +35,7 @@ class AdminoMixin(ModelAdmin):
             url(r'^api/$',
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_list' % info),
-            url(r'^api/(?P<pk>[-\d]+)/$',
+            url(r'^api/(?P<pk>[-\d]+)/change/$',
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_detail' % info),
         ]
@@ -89,11 +89,17 @@ class AdminoMixin(ModelAdmin):
         model_fields.extend(readonly_fields)
         model_fields.extend(self.list_display)
         for field in model_fields:
+            if "_id" in  field:
+                continue
             if hasattr(obj, field):
                 f = getattr(obj, field)
                 bundle[field] = unicode(f)
                 if field == "book_type":
-                    f = list(f.all().values_list("id", flat=True))
+                    f = [{"id": m.id, "name": unicode(m)} for m in f.all()]
+                    bundle[field] = f
+
+                if field == "author":
+                    f = {"id": f.id, "name": unicode(f)}
                     bundle[field] = f
 
             if hasattr(self, field):

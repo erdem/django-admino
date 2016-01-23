@@ -1,11 +1,14 @@
+from collections import OrderedDict
 from functools import update_wrapper
 import json
+from urllib import urlencode
 from django import http
 from django.conf import settings
 from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .constants import HTTP_METHOD_VIEWS
@@ -98,16 +101,40 @@ class AdminoMixin(ModelAdmin):
 
         return bundle
 
+    def get_api_next_url(self, request, cl):
+        page_num = cl.page_num
+        if page_num and page_num is not int or not cl.multi_page:
+            return None
+        info = self.model._meta.app_label, self.model._meta.model_name
+        url = reverse_lazy("admin:%s_%s_api_list" % info)
+        host = request.get_host()
+        params = cl.params
+        params["p"] = page_num + 1
+        return "%s://%s%s?%s" % (request.scheme, host, url, urlencode(params))
+
+    def get_api_previous_url(self, request, cl):
+        page_num = cl.page_num
+        if page_num == 0 or not cl.multi_page:
+            return None
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        url = reverse_lazy("admin:%s_%s_api_list" % info)
+        host = request.get_host()
+        params = cl.params
+        params["p"] = page_num - 1
+        return "%s://%s%s?%s" % (request.scheme, host, url, urlencode(params))
+
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)
         results = []
         for obj in cl.result_list:
             results.append(self.obj_as_dict(request, obj))
 
-        data = {
-            "count": cl.result_count,
-            "results": results
-        }
+        data = OrderedDict()
+        data["count"] = cl.result_count
+        data["next"] = self.get_api_next_url(request, cl)
+        data["previous"] = self.get_api_previous_url(request, cl)
+        data["results"] = results
         return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
 
     def api_detail(self, request, *args, **kwargs):
@@ -116,7 +143,6 @@ class AdminoMixin(ModelAdmin):
         form = ModelForm(instance=obj)
         data = self.obj_as_dict(request, form.instance)
         return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
-
 
     def api_create(self, request, *args, **kwargs):
         data = json.loads(request.body)

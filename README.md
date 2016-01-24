@@ -42,7 +42,7 @@ Built-in API admin de ki list ve detail kullanılan model datasını json olarak
 ![](http://oi67.tinypic.com/2sbvhmx.jpg)
 
 
-**Book detail api url:** /admin/books/**api**/book/1/
+**Book detail api url:** /admin/books/book/**api**/1/
 
 ![](http://oi66.tinypic.com/zxlkc6.jpg)
 

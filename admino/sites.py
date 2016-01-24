@@ -89,18 +89,9 @@ class AdminoMixin(ModelAdmin):
         model_fields.extend(readonly_fields)
         model_fields.extend(self.list_display)
         for field in model_fields:
-            if "_id" in  field:
-                continue
             if hasattr(obj, field):
                 f = getattr(obj, field)
                 bundle[field] = unicode(f)
-                if field == "book_type":
-                    f = [{"id": m.id, "name": unicode(m)} for m in f.all()]
-                    bundle[field] = f
-
-                if field == "author":
-                    f = {"id": f.id, "name": unicode(f)}
-                    bundle[field] = f
 
             if hasattr(self, field):
                 field_method = getattr(self, field)

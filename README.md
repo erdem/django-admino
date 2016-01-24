@@ -9,8 +9,8 @@ Yapacağınız bazı custom çözümler, admin'nin template dosyalarının çok 
 
 Bu sorunu çözmek için django'nun admin uygulamasını extend edip, template ve static dosyaları ekleyrek bunu çözen paketler mevcuttur. 
 
-[django-suit](https://github.com/darklow/django-suit){: target=_blank}
-[django-jet](https://github.com/geex-arts/django-jet){: target=_blank}
+- [django-suit](https://github.com/darklow/django-suit)
+- [django-jet](https://github.com/geex-arts/django-jet)
 
 Bu çözümler django'nun "ModelAdmin" class'i üzerinde bir değişiklik yapamadıkları için, admin de özel çözüm getirmek bir yere kadar çözülüyor.
 
@@ -81,8 +81,24 @@ settigns.py
 
     ADMINO_MIXIN_CLASS = "app.module.AdminMixinClass"
     
-
     
+#### FEATURES
+
+###### easy_go
+
+easy_go bir admin detail sayfasındayken admino, list sayfasina gitmeden sizi gitmek istediğiniz data detayına ulaştırır.
+
+admin.py
+
+    class BookAdmin(admin.ModelAdmin):
+        easy_go = True
+        list_display = ("name", "author", "is_visible")
+        list_filter = ("author", "is_visible")
+        search_fields = ("name", "author__name")
+
+
+![](http://oi64.tinypic.com/2u783ds.jpg)
+  
 
 
 

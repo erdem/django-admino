@@ -25,7 +25,7 @@ Every API endpoint will generate your "ModelAdmin" configurations.
 
 **Book detail page url:** /admin/books/book/1/
 
-![](http://oi67.tinypic.com/2sbvhmx.jpg)
+![](http://oi66.tinypic.com/4jx4d0.jpg)
 
 
 **Book detail api url:** /admin/**api**/books/book/1/

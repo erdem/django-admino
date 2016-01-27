@@ -11,3 +11,57 @@ if you want to implement a custom widget or ui for django admin, you may need a 
 
 Admino added to new api views to django admin genericly. You don't need to change default admin files. 
 Every API endpoint will generate your "ModelAdmin" configurations.
+
+##### EXAMPLE:
+
+**Visible Books list page url:** /admin/books/book/?is_visible__exact=1
+
+![](http://oi67.tinypic.com/2dqkfbs.jpg)
+
+**Visible Books api url:** /admin/**api**/books/book//?is_visible__exact=1
+
+![](http://oi65.tinypic.com/dwp5i.jpg)
+
+
+**Book detail page url:** /admin/books/book/1/
+
+![](http://oi67.tinypic.com/2sbvhmx.jpg)
+
+
+**Book detail api url:** /admin/**api**/books/book//1/
+
+![](http://oi66.tinypic.com/zxlkc6.jpg)
+
+#### Install
+
+settings.py
+    
+    INSTALLED_APPS = [
+        'admino',
+    
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+    
+        'books',
+    ]
+
+urls.py
+
+    import admino
+    admin.site = admino.site.activated(admin.site)
+    
+    urlpatterns = [
+        url(r'^admin/', admin.site.urls),
+    ]
+
+
+Add custom admin Mixin class:
+
+settigns.py
+
+    ADMINO_MIXIN_CLASS = "app.module.AdminMixinClass"
+    

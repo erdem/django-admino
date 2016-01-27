@@ -50,7 +50,7 @@ settings.py
     ]
 
 urls.py
-
+    from django.contrib import admin
     import admino
     admin.site = admino.site.activated(admin.site)
     

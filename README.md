@@ -61,7 +61,7 @@ urls.py
 
 Add custom admin Mixin class:
 
-settigns.py
+settings.py
 
     ADMINO_MIXIN_CLASS = "app.module.AdminMixinClass"
     

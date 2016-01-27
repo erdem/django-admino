@@ -20,7 +20,7 @@ Every API endpoint will generate your "ModelAdmin" configurations.
 
 **Visible Books api url:** /admin/**api**/books/book//?is_visible__exact=1
 
-![](http://oi65.tinypic.com/dwp5i.jpg)
+![](http://oi65.tinypic.com/2nu3779.jpg)
 
 
 **Book detail page url:** /admin/books/book/1/

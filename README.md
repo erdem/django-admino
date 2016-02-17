@@ -1,6 +1,6 @@
 Admino is a django package that provides a REST API for admin endpoints. It allows you to customize django admin panel.
 
-http://admino.io/
+http://admino.io
 
 
 ###Problem?

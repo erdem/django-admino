@@ -1,17 +1,19 @@
+import json
+
 from collections import OrderedDict
 from functools import update_wrapper
-import json
 from urllib import urlencode
+
 from django import http
 from django.conf import settings
 from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.options import IncorrectLookupParameters
-from django.core import serializers
+from django.conf.urls import url, include
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse_lazy
-from django.db.models import ManyToManyField
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from .constants import HTTP_METHOD_VIEWS
 
 
@@ -19,9 +21,7 @@ class AdminoMixin(ModelAdmin):
 
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
-    def get_urls(self):
-        from django.conf.urls import url
-        urls = super(AdminoMixin, self).get_urls()
+    def get_api_urls(self):
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -32,14 +32,18 @@ class AdminoMixin(ModelAdmin):
         info = self.model._meta.app_label, self.model._meta.model_name
 
         urlpatterns = [
-            url(r'^api/$',
+            url(r'^$',
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_list' % info),
-            url(r'^api/(?P<pk>[-\d]+)/change/$',
+            url(r'^(?P<pk>[-\d]+)/$',
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_detail' % info),
         ]
-        return urlpatterns + urls
+        return urlpatterns
+
+    def api_urls(self):
+        return self.get_api_urls()
+    api_urls = property(api_urls)
 
     def _allowed_methods(self):
         return [m.upper() for m in self.http_method_names if hasattr(self, "api_" + m)]
@@ -51,6 +55,7 @@ class AdminoMixin(ModelAdmin):
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
+        import ipdb;ipdb.set_trace()
         if not request.method.lower() in self.http_method_names:
             return self.http_method_not_allowed(request, *args, **kwargs)
 
@@ -169,7 +174,6 @@ class AdminoMixin(ModelAdmin):
         return HttpResponse("delete")
 
 
-
 class ModelAdmino(AdminoMixin, ModelAdmin):
     admin_type = "admino"
 
@@ -185,5 +189,17 @@ class AdminoSite(AdminSite):
             admino_obj = admino_class(model, self)
             self._registry[model] = admino_obj
         return self
+
+    def get_urls(self):
+        urlpatterns = super(AdminoSite, self).get_urls()
+        valid_app_labels = []
+        for model, model_admin in self._registry.items():
+            api_urlpatterns = [
+                url(r'^api/%s/%s/' % (model._meta.app_label, model._meta.model_name), include(model_admin.api_urls)),
+            ]
+            urlpatterns = urlpatterns + api_urlpatterns
+            if model._meta.app_label not in valid_app_labels:
+                valid_app_labels.append(model._meta.app_label)
+        return urlpatterns
 
 site = AdminoSite()

@@ -11,9 +11,16 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+SITE_PATH = os.path.abspath(os.path.dirname(__file__))
+
+PROJECT_PATH = os.path.normpath(os.path.join(SITE_PATH, '..', '..'))
+if PROJECT_PATH not in sys.path:
+    sys.path.insert(0, PROJECT_PATH)
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,12 +38,16 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'admino',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'contents',
 ]
 
 MIDDLEWARE_CLASSES = [

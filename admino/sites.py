@@ -55,7 +55,6 @@ class AdminoMixin(ModelAdmin):
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-        import ipdb;ipdb.set_trace()
         if not request.method.lower() in self.http_method_names:
             return self.http_method_not_allowed(request, *args, **kwargs)
 

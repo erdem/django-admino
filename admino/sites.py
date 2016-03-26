@@ -103,6 +103,7 @@ class AdminoMixin(ModelAdmin):
                     bundle[field] = field_method(obj)
                 else:
                     bundle[field] = field_method
+
         info = self.model._meta.app_label, self.model._meta.model_name
         admin_detail_url = reverse_lazy("admin:%s_%s_change" % info, args=(obj.id,))
         bundle["detail_page"] = str(admin_detail_url)
@@ -157,8 +158,8 @@ class AdminoMixin(ModelAdmin):
         ModelForm = self.get_form(request, obj=None)
         form = ModelForm(data=data, files=request.FILES)
         if form.is_valid():
-            form.save()
-            data = self.obj_as_dict(request, obj=None)
+            obj = form.save()
+            data = self.obj_as_dict(request, obj)
             return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
         else:
             errors = {

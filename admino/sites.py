@@ -203,3 +203,4 @@ class AdminoSite(AdminSite):
         return urlpatterns
 
 site = AdminoSite()
+

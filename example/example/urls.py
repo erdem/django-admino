@@ -8,6 +8,6 @@ from admino import site
 admin.site = site.activated(admin.site)
 admin.autodiscover()
 
-urlpatterns = patterns('',
-    url(r'^admin/', include(admin.site.urls)),
-) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns = [
+    url(r'^admin/', admin.site.urls),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

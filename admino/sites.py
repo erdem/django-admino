@@ -89,7 +89,7 @@ class AdminoMixin(object):
 
     def obj_as_dict(self, request, obj):
         bundle = dict()
-        model_fields = self.model._meta.get_all_field_names()
+        model_fields = [f.name for f in self.model._meta.get_fields()]
         readonly_fields = self.get_readonly_fields(request, obj)
         model_fields.extend(readonly_fields)
         model_fields.extend(self.list_display)

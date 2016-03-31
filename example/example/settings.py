@@ -125,7 +125,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-ADMINO_MIXIN_CLASS = "contents.admin.TestAdminoClass"
+# ADMINO_MIXIN_CLASS = "contents.admin.TestAdminoClass"
 
 
 # Static files (CSS, JavaScript, Images)

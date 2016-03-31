@@ -3,7 +3,7 @@ import json
 from collections import OrderedDict
 from functools import update_wrapper
 from urllib import urlencode
-from admino.settings import import_from_string
+from admino.utils import import_from_string
 
 from django import http
 from django.conf import settings

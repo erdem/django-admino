@@ -1,3 +1,4 @@
+from admino.sites import ModelAdmino
 from django.contrib import admin
 from models import Author, BookType, Book
 
@@ -16,8 +17,11 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ("name", "author")
 
 
-class TestAdminoClass(admin.ModelAdmin):
-    pass
+class TestAdminoClass(ModelAdmino):
+    def api_get(self, request, *args, **kwargs):
+        print "hello"
+        return super(TestAdminoClass, self).api_get(request, *args, **kwargs)
+
 
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(BookType, BookTypeAdmin)

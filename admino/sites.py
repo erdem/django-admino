@@ -3,6 +3,7 @@ import json
 from collections import OrderedDict
 from functools import update_wrapper
 from urllib import urlencode
+from admino.settings import import_from_string
 
 from django import http
 from django.conf import settings
@@ -17,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(ModelAdmin):
+class AdminoMixin(object):
 
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
@@ -184,8 +185,12 @@ class AdminoSite(AdminSite):
         django_admin_registered_apps = site_obj._registry
         self._registry = {}
         for model, admin_obj in django_admin_registered_apps.items():
+            mixin_class = AdminoMixin
+            if hasattr(settings, "ADMINO_MIXIN_CLASS"):
+                module_path = getattr(settings, "ADMINO_MIXIN_CLASS")
+                mixin_class = import_from_string(module_path)
             django_admin_class = admin_obj.__class__
-            admino_class = type("ModelAdmino", (AdminoMixin, django_admin_class), {"admin_type": "admino"})
+            admino_class = type("ModelAdmino", (mixin_class, django_admin_class), {"admin_type": "admino"})
             admino_obj = admino_class(model, self)
             self._registry[model] = admino_obj
         return self

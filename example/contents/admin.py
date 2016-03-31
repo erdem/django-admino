@@ -16,6 +16,9 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ("name", "author")
 
 
+class TestAdminoClass(admin.ModelAdmin):
+    pass
+
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(BookType, BookTypeAdmin)
 admin.site.register(Book, BookAdmin)

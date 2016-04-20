@@ -87,6 +87,7 @@ class AdminoMixin(ModelAdmin):
             raise Exception("IncorrectLookupParameters")
 
     def obj_as_dict(self, request, obj):
+        # todo implement a serializer class
         bundle = dict()
         model_fields = self.model._meta.get_fields()
 
@@ -101,7 +102,6 @@ class AdminoMixin(ModelAdmin):
                 rel_model = field.rel.model
                 f_val = getattr(obj, field.name)
                 rel_field_names = [f.name for f in rel_model._meta.get_fields() if not f.is_relation]
-                print rel_field_names
                 for m in f_val.all():
                     d = dict()
                     for f_name in rel_field_names:

@@ -88,11 +88,29 @@ class AdminoMixin(ModelAdmin):
 
     def obj_as_dict(self, request, obj):
         bundle = dict()
-        model_fields = [f.name for f in self.model._meta.get_fields()]
+        model_fields = self.model._meta.get_fields()
+
+        field_names = [f.name for f in model_fields]
         readonly_fields = self.get_readonly_fields(request, obj)
-        model_fields.extend(readonly_fields)
-        model_fields.extend(self.list_display)
+        field_names.extend(readonly_fields)
+        field_names.extend(self.list_display)
+
         for field in model_fields:
+            if field.rel and field.rel.many_to_many:
+                data = []
+                rel_model = field.rel.model
+                f_val = getattr(obj, field.name)
+                rel_field_names = [f.name for f in rel_model._meta.get_fields() if not f.is_relation]
+                print rel_field_names
+                for m in f_val.all():
+                    d = dict()
+                    for f_name in rel_field_names:
+                        d[f_name] = getattr(m, f_name)
+                    data.append(d)
+                bundle[field.name] = data
+                field_names.remove(field.name)
+
+        for field in field_names:
             if hasattr(obj, field):
                 f = getattr(obj, field)
                 bundle[field] = unicode(f)
@@ -115,6 +133,7 @@ class AdminoMixin(ModelAdmin):
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)
         view_class = self.get_api_list_view_class()
+        print view_class
         return view_class().get(request, model_admin=self, admin_cl=cl)
 
     def api_detail(self, request, *args, **kwargs):

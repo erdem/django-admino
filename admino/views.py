@@ -39,7 +39,6 @@ class ChangeListRetrieveAPIView(APIView):
         self.model = admin_cl.model
         results = []
         for obj in admin_cl.result_list:
-            print obj
             results.append(model_admin.obj_as_dict(request, obj))
 
         data = OrderedDict()

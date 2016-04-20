@@ -133,7 +133,6 @@ class AdminoMixin(ModelAdmin):
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)
         view_class = self.get_api_list_view_class()
-        print view_class
         return view_class().get(request, model_admin=self, admin_cl=cl)
 
     def api_detail(self, request, *args, **kwargs):

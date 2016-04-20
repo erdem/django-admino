@@ -1,8 +1,6 @@
 import json
 
-from collections import OrderedDict
 from functools import update_wrapper
-from urllib import urlencode
 from admino.utils import import_from_string
 from admino.views import ChangeListRetrieveAPIView
 
@@ -15,7 +13,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
 
 from .constants import HTTP_METHOD_VIEWS
 

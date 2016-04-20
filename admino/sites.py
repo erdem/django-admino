@@ -4,6 +4,7 @@ from collections import OrderedDict
 from functools import update_wrapper
 from urllib import urlencode
 from admino.utils import import_from_string
+from admino.views import ChangeListRetrieveAPIView
 
 from django import http
 from django.conf import settings
@@ -14,11 +15,12 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(object):
+class AdminoMixin(ModelAdmin):
 
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
@@ -110,41 +112,13 @@ class AdminoMixin(object):
         bundle["detail_page"] = str(admin_detail_url)
         return bundle
 
-    def get_api_next_url(self, request, cl):
-        page_num = cl.page_num
-        if page_num and page_num is not int or not cl.multi_page:
-            return None
-        info = self.model._meta.app_label, self.model._meta.model_name
-        url = reverse_lazy("admin:%s_%s_api_list" % info)
-        host = request.get_host()
-        params = cl.params
-        params["p"] = page_num + 1
-        return "%s://%s%s?%s" % (request.scheme, host, url, urlencode(params))
-
-    def get_api_previous_url(self, request, cl):
-        page_num = cl.page_num
-        if page_num == 0 or not cl.multi_page:
-            return None
-
-        info = self.model._meta.app_label, self.model._meta.model_name
-        url = reverse_lazy("admin:%s_%s_api_list" % info)
-        host = request.get_host()
-        params = cl.params
-        params["p"] = page_num - 1
-        return "%s://%s%s?%s" % (request.scheme, host, url, urlencode(params))
+    def get_api_list_view_class(self):
+        return ChangeListRetrieveAPIView
 
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)
-        results = []
-        for obj in cl.result_list:
-            results.append(self.obj_as_dict(request, obj))
-
-        data = OrderedDict()
-        data["count"] = cl.result_count
-        data["next"] = self.get_api_next_url(request, cl)
-        data["previous"] = self.get_api_previous_url(request, cl)
-        data["results"] = results
-        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
+        view_class = self.get_api_list_view_class()
+        return view_class().get(request, model_admin=self, admin_cl=cl)
 
     def api_detail(self, request, *args, **kwargs):
         obj = self.get_object(request, object_id=kwargs.get("pk"))

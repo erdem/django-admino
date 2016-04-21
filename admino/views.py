@@ -47,3 +47,4 @@ class ChangeListRetrieveAPIView(APIView):
         data["previous"] = self.get_api_previous_url(request, admin_cl)
         data["results"] = results
         return JsonResponse(data)
+

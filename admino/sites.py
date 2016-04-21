@@ -120,9 +120,7 @@ class AdminoMixin(ModelAdmin):
                 for f_name in rel_field_names:
                     data[f_name] = unicode(getattr(f_val, f_name))
                 bundle[field.name] = data
-                print field_names
                 field_names.remove(field.name)
-                print field_names
 
         for field in field_names:
             if hasattr(obj, field):

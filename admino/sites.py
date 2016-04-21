@@ -96,6 +96,8 @@ class AdminoMixin(ModelAdmin):
         field_names.extend(readonly_fields)
         field_names.extend(self.list_display)
 
+        field_names = list(set(field_names))
+
         for field in model_fields:
             if field.rel and field.rel.many_to_many:
                 data = []
@@ -105,10 +107,22 @@ class AdminoMixin(ModelAdmin):
                 for m in f_val.all():
                     d = dict()
                     for f_name in rel_field_names:
-                        d[f_name] = getattr(m, f_name)
+                        d[f_name] = unicode(getattr(m, f_name))
                     data.append(d)
                 bundle[field.name] = data
                 field_names.remove(field.name)
+
+            if field.rel and field.rel.one_to_many:
+                data = {}
+                rel_model = field.rel.model
+                f_val = getattr(obj, field.name)
+                rel_field_names = [f.name for f in rel_model._meta.get_fields() if not f.is_relation]
+                for f_name in rel_field_names:
+                    data[f_name] = unicode(getattr(f_val, f_name))
+                bundle[field.name] = data
+                print field_names
+                field_names.remove(field.name)
+                print field_names
 
         for field in field_names:
             if hasattr(obj, field):

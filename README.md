@@ -32,7 +32,7 @@ Every API endpoint will generate your "ModelAdmin" configurations.
 
 **Book detail api url:** /admin/**api**/books/book/1/
 
-![](http://oi66.tinypic.com/zxlkc6.jpg)
+![](http://oi65.tinypic.com/9jisus.jpg)
 
 #### Install
 

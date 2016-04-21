@@ -48,3 +48,8 @@ class ChangeListRetrieveAPIView(APIView):
         data["results"] = results
         return JsonResponse(data)
 
+
+class AdminDetailRetrieveAPIView(APIView):
+
+    def get(self, request, model_admin, admin_cl, *args, **kwargs):
+        return JsonResponse({})

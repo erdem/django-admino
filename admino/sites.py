@@ -1,6 +1,9 @@
 import json
+from collections import OrderedDict
 
 from functools import update_wrapper
+
+from admino.serializer import BaseSerializer
 from admino.utils import import_from_string
 from admino.views import ChangeListRetrieveAPIView
 
@@ -88,7 +91,7 @@ class AdminoMixin(ModelAdmin):
 
     def obj_as_dict(self, request, obj):
         # todo implement a serializer class
-        bundle = dict()
+        bundle = OrderedDict()
         model_fields = self.model._meta.get_fields()
 
         field_names = [f.name for f in model_fields]
@@ -97,9 +100,9 @@ class AdminoMixin(ModelAdmin):
         field_names.extend(self.list_display)
 
         field_names = list(set(field_names))
-
+        sr = BaseSerializer(fields=field_names, admin_instance=self)
         for field in model_fields:
-            if field.rel and field.rel.many_to_many:
+            if getattr(field, "rel", None) and field.rel.many_to_many:
                 data = []
                 rel_model = field.rel.model
                 f_val = getattr(obj, field.name)
@@ -112,7 +115,7 @@ class AdminoMixin(ModelAdmin):
                 bundle[field.name] = data
                 field_names.remove(field.name)
 
-            if field.rel and field.rel.one_to_many:
+            if getattr(field, "rel", None) and field.rel.one_to_many:
                 data = {}
                 rel_model = field.rel.model
                 f_val = getattr(obj, field.name)

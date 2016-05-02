@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from functools import update_wrapper
 
-from admino.serializer import BaseSerializer
 from admino.utils import import_from_string
 from admino.views import ChangeListRetrieveAPIView
 
@@ -100,7 +99,6 @@ class AdminoMixin(ModelAdmin):
         field_names.extend(self.list_display)
 
         field_names = list(set(field_names))
-        sr = BaseSerializer(fields=field_names, admin_instance=self)
         for field in model_fields:
             if getattr(field, "rel", None) and field.rel.many_to_many:
                 data = []

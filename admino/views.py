@@ -67,4 +67,4 @@ class APIMetaView(APIView):
 class AdminDetailRetrieveAPIView(APIView):
 
     def get(self, request, model_admin, admin_cl, *args, **kwargs):
-        return JsonResponse({})
+        return self.json_response("ok")

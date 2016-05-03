@@ -228,3 +228,4 @@ class AdminoSite(AdminSite):
 
 
 site = AdminoSite()
+

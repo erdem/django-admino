@@ -8,7 +8,9 @@ from django.views.generic import View
 
 
 class APIView(View):
-    pass
+
+    def json_response(self, data, *args, **kwargs):
+        return JsonResponse(data, safe=False, *args, **kwargs)
 
 
 class ChangeListRetrieveAPIView(APIView):
@@ -47,7 +49,7 @@ class ChangeListRetrieveAPIView(APIView):
         data["next"] = self.get_api_next_url(request, admin_cl)
         data["previous"] = self.get_api_previous_url(request, admin_cl)
         data["results"] = results
-        return JsonResponse(data)
+        return self.json_response(data)
 
 
 class APIMetaView(APIView):
@@ -59,7 +61,7 @@ class APIMetaView(APIView):
             d = dict()
             d[name] = FormFieldSerializer(field=field).data
             result.append(d)
-        return JsonResponse(result, safe=False)
+        return self.json_response(result)
 
 
 class AdminDetailRetrieveAPIView(APIView):

@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from admino.utils import obj_as_dict
+
 
 class FormWidgetSerializer(object):
 
@@ -9,8 +11,8 @@ class FormWidgetSerializer(object):
     @property
     def data(self):
         widget_data = OrderedDict()
-        widget_data["type"] = self.field.__class__.__name__
-        return widget_data
+        widget_data["type"] = self.widget.__class__.__name__
+        return obj_as_dict(widget_data)
 
 
 class FormFieldSerializer(object):
@@ -24,7 +26,7 @@ class FormFieldSerializer(object):
         field_data["type"] = self.field.__class__.__name__
         field_data["widget"] = self.serialize_widget()
         field_data["is_required"] = self.field.required
-        return field_data
+        return obj_as_dict(field_data)
 
     def serialize_widget(self):
         return FormWidgetSerializer(self.field.widget).data

@@ -13,8 +13,11 @@ class BookTypeAdmin(admin.ModelAdmin):
 
 class BookAdmin(admin.ModelAdmin):
     admin_type = "admino"
-    list_display = ("name", "author")
+    list_display = ("name", "author", "title")
     list_display_links = ("name", "author")
+
+    def title(self, obj):
+        return "mr %s" % obj.name
 
 
 class TestAdminoClass(ModelAdmino):

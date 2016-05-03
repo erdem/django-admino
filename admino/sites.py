@@ -20,7 +20,6 @@ from .constants import HTTP_METHOD_VIEWS
 
 
 class AdminoMixin(ModelAdmin):
-
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
     def get_api_urls(self):
@@ -28,6 +27,7 @@ class AdminoMixin(ModelAdmin):
         def wrap(view):
             def wrapper(*args, **kwargs):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
+
             wrapper.model_admin = self
             return update_wrapper(wrapper, view)
 
@@ -45,6 +45,7 @@ class AdminoMixin(ModelAdmin):
 
     def api_urls(self):
         return self.get_api_urls()
+
     api_urls = property(api_urls)
 
     def _allowed_methods(self):
@@ -80,19 +81,30 @@ class AdminoMixin(ModelAdmin):
         ChangeList = self.get_changelist(request)
         try:
             cl = ChangeList(request, self.model, self.list_display,
-                self.list_display_links, self.list_filter, self.date_hierarchy,
-                self.search_fields, self.list_select_related, self.list_per_page,
-                self.list_max_show_all, self.list_editable, self)
+                            self.list_display_links, self.list_filter, self.date_hierarchy,
+                            self.search_fields, self.list_select_related, self.list_per_page,
+                            self.list_max_show_all, self.list_editable, self)
             return cl
 
         except IncorrectLookupParameters:
             raise Exception("IncorrectLookupParameters")
 
+    def get_api_readonly_fields(self, request, obj):
+        model_fields = self.model._meta.get_fields()
+        model_field_names = [f.name for f in model_fields]
+        modal_admin_fields = set(list(self.get_readonly_fields(request, obj)) + list(self.get_list_display(request)))
+        api_readonly_fields = []
+        for field in modal_admin_fields:
+            if not field in model_field_names:
+                api_readonly_fields.append(field)
+        return api_readonly_fields
+
     def obj_as_dict(self, request, obj):
         # todo implement a serializer class
         bundle = OrderedDict()
         model_fields = self.model._meta.get_fields()
-
+        api_readonly_fields = self.get_api_readonly_fields(request, obj)
+        print api_readonly_fields
         field_names = [f.name for f in model_fields]
         readonly_fields = self.get_readonly_fields(request, obj)
         field_names.extend(readonly_fields)
@@ -182,7 +194,6 @@ class ModelAdmino(AdminoMixin, ModelAdmin):
 
 
 class AdminoSite(AdminSite):
-
     def activated(self, site_obj):
         django_admin_registered_apps = site_obj._registry
         self._registry = {}
@@ -209,5 +220,5 @@ class AdminoSite(AdminSite):
                 valid_app_labels.append(model._meta.app_label)
         return urlpatterns
 
-site = AdminoSite()
 
+site = AdminoSite()

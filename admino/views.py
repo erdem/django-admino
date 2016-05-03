@@ -49,6 +49,13 @@ class ChangeListRetrieveAPIView(APIView):
         return JsonResponse(data)
 
 
+class APIMetaView(APIView):
+
+    def get(self, request, model_admin, *args, **kwargs):
+
+        return JsonResponse({})
+
+
 class AdminDetailRetrieveAPIView(APIView):
 
     def get(self, request, model_admin, admin_cl, *args, **kwargs):

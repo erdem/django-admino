@@ -4,7 +4,7 @@ from collections import OrderedDict
 from functools import update_wrapper
 
 from admino.utils import import_from_string
-from admino.views import ChangeListRetrieveAPIView
+from admino.views import ChangeListRetrieveAPIView, APIMetaView
 
 from django import http
 from django.conf import settings
@@ -40,6 +40,9 @@ class AdminoMixin(ModelAdmin):
             url(r'^(?P<pk>[-\d]+)/$',
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_detail' % info),
+            url(r'^meta/$',
+                wrap(self.admin_site.admin_view(self.api_meta_view)),
+                name='%s_%s_api_meta' % info),
         ]
         return urlpatterns
 
@@ -99,18 +102,18 @@ class AdminoMixin(ModelAdmin):
                 api_readonly_fields.append(field)
         return api_readonly_fields
 
+    def get_api_all_field_names(self, request, obj):
+        api_readonly_fields = self.get_api_readonly_fields(request, obj)
+        model_fields = self.model._meta.get_fields()
+        field_names = [f.name for f in model_fields]
+        return list(set(field_names)) + api_readonly_fields
+
     def obj_as_dict(self, request, obj):
         # todo implement a serializer class
         bundle = OrderedDict()
         model_fields = self.model._meta.get_fields()
-        api_readonly_fields = self.get_api_readonly_fields(request, obj)
-        print api_readonly_fields
-        field_names = [f.name for f in model_fields]
-        readonly_fields = self.get_readonly_fields(request, obj)
-        field_names.extend(readonly_fields)
-        field_names.extend(self.list_display)
+        field_names = self.get_api_all_field_names(request, obj)
 
-        field_names = list(set(field_names))
         for field in model_fields:
             if getattr(field, "rel", None) and field.rel.many_to_many:
                 data = []
@@ -154,6 +157,9 @@ class AdminoMixin(ModelAdmin):
 
     def get_api_list_view_class(self):
         return ChangeListRetrieveAPIView
+
+    def api_meta_view(self, request, *args, **kwargs):
+        return APIMetaView().get(request, model_admin=self)
 
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)

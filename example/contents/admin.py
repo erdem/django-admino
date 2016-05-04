@@ -15,6 +15,7 @@ class BookAdmin(admin.ModelAdmin):
     admin_type = "admino"
     list_display = ("name", "author", "title")
     list_display_links = ("name", "author")
+    list_filter = ("author", "name")
 
     def title(self, obj):
         return "mr %s" % obj.name

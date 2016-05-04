@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from urllib import urlencode
 
-from admino.fields import ModelAdminSerializer
+from admino.serializers import ModelAdminSerializer
 from django.core.urlresolvers import reverse_lazy
 from django.http import JsonResponse
 from django.views.generic import View

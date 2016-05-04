@@ -210,8 +210,6 @@ class AdminoSite(AdminSite):
                 mixin_class = import_from_string(module_path)
             django_admin_class = admin_obj.__class__
             admino_class = type("ModelAdmino", (mixin_class, django_admin_class), {"admin_type": "admino"})
-            print admino_class
-            print django_admin_class
             admino_obj = admino_class(model, self)
             self._registry[model] = admino_obj
         return self

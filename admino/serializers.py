@@ -4,14 +4,12 @@ from admino.utils import obj_as_dict
 
 
 class BaseSerializer(object):
-
     @property
     def data(self):
         raise NotImplementedError
 
 
 class FormWidgetSerializer(BaseSerializer):
-
     def __init__(self, widget, *args, **kwargs):
         self.widget = widget
 
@@ -23,7 +21,6 @@ class FormWidgetSerializer(BaseSerializer):
 
 
 class FormFieldSerializer(BaseSerializer):
-
     def __init__(self, field, *args, **kwargs):
         self.field = field
 
@@ -40,7 +37,6 @@ class FormFieldSerializer(BaseSerializer):
 
 
 class FormSerializer(BaseSerializer):
-
     def __init__(self, form, *args, **kwargs):
         self.form = form
 
@@ -57,20 +53,20 @@ class FormSerializer(BaseSerializer):
         return serialized_fields
 
 
-MODEL_ADMIN_CLASS_ATTRIBUTES = ("raw_id_fields", "fields", "exclude", "fieldsets", "filter_vertical", "filter_horizontal", "radio_fields", "prepopulated_fields", "formfield_overrides", "readonly_fields", "ordering", "view_on_site", "show_full_result_count", "list_display", "list_display_links", "list_filter", "list_per_page", "list_max_show_all", "list_editable", "search_fields", "date_hierarchy", "save_as", "save_on_top")
+MODEL_ADMIN_CLASS_ATTRIBUTES = (
+    "raw_id_fields", "fields", "exclude", "fieldsets", "filter_vertical", "filter_horizontal", "radio_fields",
+    "prepopulated_fields", "formfield_overrides", "readonly_fields", "ordering", "view_on_site",
+    "show_full_result_count", "list_display", "list_display_links", "list_filter", "list_per_page", "list_max_show_all",
+    "list_editable", "search_fields", "date_hierarchy","save_as", "save_on_top")
 
 
 class ModelAdminSerializer(BaseSerializer):
-
     def __init__(self, model_admin, admin_form, *args, **kwargs):
         self.model_admin = model_admin
         self.admin_form = admin_form
-        import ipdb;ipdb.set_trace()
 
     @property
     def data(self):
-        data = OrderedDict()
-
         return {
             "form": self.serialize_form()
         }

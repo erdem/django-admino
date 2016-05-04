@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from urllib import urlencode
 
-from admino.fields import FormFieldSerializer
+from admino.fields import ModelAdminSerializer
 from django.core.urlresolvers import reverse_lazy
 from django.http import JsonResponse
 from django.views.generic import View
@@ -56,12 +56,8 @@ class APIMetaView(APIView):
 
     def get(self, request, model_admin, *args, **kwargs):
         form = model_admin.get_form(request)
-        result = []
-        for name, field in form.base_fields.items():
-            d = dict()
-            d[name] = FormFieldSerializer(field=field).data
-            result.append(d)
-        return self.json_response(result)
+        data = ModelAdminSerializer(model_admin=model_admin, admin_form=form).data
+        return self.json_response(data)
 
 
 class AdminDetailRetrieveAPIView(APIView):

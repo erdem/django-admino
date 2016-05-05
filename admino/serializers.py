@@ -11,20 +11,16 @@ def obj_as_dict(o):
     if isinstance(o, DeclarativeFieldsMetaclass):
         o = FormSerializer(form=o).data
 
-    elif isinstance(o, forms.Field):
+    if isinstance(o, forms.Field):
         o = FormFieldSerializer(field=o).data
 
-    elif isinstance(o, forms.Widget):
+    if isinstance(o, forms.Widget):
         o = FormWidgetSerializer(widget=o).data
 
-    elif isinstance(o, dict):
-        for k, v in o.items():
-            o[k] = obj_as_dict(v)
-
-    elif isinstance(o, (list, tuple)):
+    if isinstance(o, (list, tuple)):
         o = [obj_as_dict(x) for x in o]
 
-    elif isinstance(o, Promise):
+    if isinstance(o, Promise):
         try:
             o = force_unicode(o)
         except:
@@ -33,8 +29,12 @@ def obj_as_dict(o):
                 o = [obj_as_dict(x) for x in o]
             except:
                 raise Exception('Unable to resolve lazy object %s' % o)
-    elif callable(o):
+    if callable(o):
         o = o()
+
+    if isinstance(o, dict):
+        for k, v in o.items():
+            o[k] = obj_as_dict(v)
 
     return o
 
@@ -78,15 +78,13 @@ class FormSerializer(BaseSerializer):
 
     @property
     def data(self):
-        return self.serialize_fields()
-
-    def serialize_fields(self):
-        serialized_fields = []
+        form_fields = []
         for name, field in self.form.base_fields.items():
             d = dict()
-            d[name] = FormFieldSerializer(field=field).data
-            serialized_fields.append(d)
-        return serialized_fields
+            d[name] = field
+            form_fields.append(d)
+        return form_fields
+
 
 #todo check  "formfield_overrides"
 MODEL_ADMIN_CLASS_ATTRIBUTES = (
@@ -107,8 +105,6 @@ class ModelAdminSerializer(BaseSerializer):
         for attr in MODEL_ADMIN_CLASS_ATTRIBUTES:
             data[attr] = getattr(self.model_admin, attr, None)
         data["form"] = self.admin_form
-        for key, value in data.items():
-            print "%s -----> %s" % (key, value)
         return obj_as_dict(data)
 
     def serialize_form(self):

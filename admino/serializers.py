@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from django.forms.forms import DeclarativeFieldsMetaclass
 
 from django import forms
 from django.utils.encoding import force_unicode
@@ -6,7 +7,8 @@ from django.utils.functional import Promise
 
 
 def obj_as_dict(o):
-    if isinstance(o, forms.BaseForm):
+
+    if isinstance(o, DeclarativeFieldsMetaclass):
         o = FormSerializer(form=o).data
 
     elif isinstance(o, forms.Field):
@@ -104,7 +106,7 @@ class ModelAdminSerializer(BaseSerializer):
         data = OrderedDict()
         for attr in MODEL_ADMIN_CLASS_ATTRIBUTES:
             data[attr] = getattr(self.model_admin, attr, None)
-        data["form"] = self.serialize_form()
+        data["form"] = self.admin_form
         for key, value in data.items():
             print "%s -----> %s" % (key, value)
         return obj_as_dict(data)

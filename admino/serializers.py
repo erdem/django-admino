@@ -53,7 +53,7 @@ class FormWidgetSerializer(BaseSerializer):
     def data(self):
         widget_data = OrderedDict()
         widget_data["type"] = self.widget.__class__.__name__
-        return obj_as_dict(widget_data)
+        return widget_data
 
 
 class FormFieldSerializer(BaseSerializer):
@@ -64,12 +64,9 @@ class FormFieldSerializer(BaseSerializer):
     def data(self):
         field_data = OrderedDict()
         field_data["type"] = self.field.__class__.__name__
-        field_data["widget"] = self.serialize_widget()
+        field_data["widget"] = self.field.widget
         field_data["is_required"] = self.field.required
-        return obj_as_dict(field_data)
-
-    def serialize_widget(self):
-        return FormWidgetSerializer(self.field.widget).data
+        return field_data
 
 
 class FormSerializer(BaseSerializer):

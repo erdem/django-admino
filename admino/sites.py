@@ -12,6 +12,7 @@ from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.conf.urls import url, include
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -108,52 +109,29 @@ class AdminoMixin(object):
         field_names = [f.name for f in model_fields]
         return list(set(field_names)) + api_readonly_fields
 
+
+    def serialize_objs(self, objs):
+        data_objs = json.loads(serializers.serialize('json', objs)  )
+        for data in data_objs:
+            data.update(data["fields"])
+            del data["fields"]
+        return data_objs
+
+    def serialize_obj(self, obj):
+        return self.serialize_objs([obj])[0]
+
     def obj_as_dict(self, request, obj):
-        # todo implement a serializer class
-        bundle = OrderedDict()
-        model_fields = self.model._meta.get_fields()
-        field_names = self.get_api_all_field_names(request, obj)
+        data = self.serialize_obj(obj)
+        for field in obj._meta.get_fields():
+            if field.is_relation:
+                field_value = getattr(obj, field.name)
+                if field_value:
+                    if field.many_to_many:                    
+                        data[field.name] = self.serialize_objs(field_value.all())
+                    elif field.many_to_one or field.one_to_one or field_value.one_to_many:
+                        data[field.name] = self.serialize_obj(field_value)
+        return data
 
-        for field in model_fields:
-            if getattr(field, "rel", None) and field.rel.many_to_many:
-                data = []
-                rel_model = field.rel.model
-                f_val = getattr(obj, field.name)
-                rel_field_names = [f.name for f in rel_model._meta.get_fields() if not f.is_relation]
-                for m in f_val.all():
-                    d = dict()
-                    for f_name in rel_field_names:
-                        d[f_name] = unicode(getattr(m, f_name))
-                    data.append(d)
-                bundle[field.name] = data
-                field_names.remove(field.name)
-
-            if getattr(field, "rel", None) and field.rel.one_to_many:
-                data = {}
-                rel_model = field.rel.model
-                f_val = getattr(obj, field.name)
-                rel_field_names = [f.name for f in rel_model._meta.get_fields() if not f.is_relation]
-                for f_name in rel_field_names:
-                    data[f_name] = unicode(getattr(f_val, f_name))
-                bundle[field.name] = data
-                field_names.remove(field.name)
-
-        for field in field_names:
-            if hasattr(obj, field):
-                f = getattr(obj, field)
-                bundle[field] = unicode(f)
-
-            if hasattr(self, field):
-                field_method = getattr(self, field)
-                if callable(field_method):
-                    bundle[field] = field_method(obj)
-                else:
-                    bundle[field] = field_method
-
-        info = self.model._meta.app_label, self.model._meta.model_name
-        admin_detail_url = reverse_lazy("admin:%s_%s_change" % info, args=(obj.id,))
-        bundle["detail_page"] = str(admin_detail_url)
-        return bundle
 
     def get_api_list_view_class(self):
         return ChangeListRetrieveAPIView

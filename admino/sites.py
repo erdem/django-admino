@@ -123,12 +123,12 @@ class AdminoMixin(object):
     def obj_as_dict(self, request, obj):
         data = self.serialize_obj(obj)
         for field in obj._meta.get_fields():
-            if field.is_relation:
+            if field.is_relation and field.concrete:
                 field_value = getattr(obj, field.name)
                 if field_value:
                     if field.many_to_many:                    
                         data[field.name] = self.serialize_objs(field_value.all())
-                    elif field.many_to_one or field.one_to_one or field_value.one_to_many:
+                    elif field.many_to_one or field.one_to_one or field.one_to_many:
                         data[field.name] = self.serialize_obj(field_value)
         return data
 

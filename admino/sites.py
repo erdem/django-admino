@@ -20,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(object):
+class AdminoMixin(ModelAdmin):
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
     def get_api_urls(self):
@@ -93,25 +93,15 @@ class AdminoMixin(object):
         except IncorrectLookupParameters:
             raise Exception("IncorrectLookupParameters")
 
-    def get_api_readonly_fields(self, request, obj):
-        model_fields = self.model._meta.get_fields()
-        model_field_names = [f.name for f in model_fields]
-        modal_admin_fields = set(list(self.get_readonly_fields(request, obj)) + list(self.get_list_display(request)))
-        api_readonly_fields = []
-        for field in modal_admin_fields:
-            if not field in model_field_names:
-                api_readonly_fields.append(field)
-        return api_readonly_fields
-
-    def get_api_all_field_names(self, request, obj):
-        api_readonly_fields = self.get_api_readonly_fields(request, obj)
-        model_fields = self.model._meta.get_fields()
-        field_names = [f.name for f in model_fields]
-        return list(set(field_names)) + api_readonly_fields
-
+    def get_model_admin_field_names(self, request, obj):
+        """
+            This method return admin class readonly custom fields.
+            Getting ModelAdmin list_display + readonly_fields
+        """
+        return set(list(self.get_readonly_fields(request, obj)) + list(self.get_list_display(request)))
 
     def serialize_objs(self, objs):
-        data_objs = json.loads(serializers.serialize('json', objs)  )
+        data_objs = json.loads(serializers.serialize('json', objs))
         for data in data_objs:
             data.update(data["fields"])
             del data["fields"]
@@ -122,16 +112,34 @@ class AdminoMixin(object):
 
     def obj_as_dict(self, request, obj):
         data = self.serialize_obj(obj)
+
+        # serialize model instance fields datas
         for field in obj._meta.get_fields():
             if field.is_relation and field.concrete:
                 field_value = getattr(obj, field.name)
                 if field_value:
-                    if field.many_to_many:                    
+                    if field.many_to_many:
                         data[field.name] = self.serialize_objs(field_value.all())
                     elif field.many_to_one or field.one_to_one or field.one_to_many:
                         data[field.name] = self.serialize_obj(field_value)
-        return data
 
+        # add custom admin class field to serialized bundle
+        model_admin_fields = self.get_model_admin_field_names(request, obj)
+        for field in model_admin_fields:
+            if field in data:
+                continue
+
+            if hasattr(obj, field):
+                f = getattr(obj, field)
+                data[field] = unicode(f)
+
+            if hasattr(self, field):
+                field_method = getattr(self, field)
+                if callable(field_method):
+                    data[field] = field_method(obj)
+                else:
+                    data[field] = field_method
+        return data
 
     def get_api_list_view_class(self):
         return ChangeListRetrieveAPIView

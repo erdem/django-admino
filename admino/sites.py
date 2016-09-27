@@ -1,6 +1,4 @@
 import json
-from collections import OrderedDict
-
 from functools import update_wrapper
 
 from admino.utils import import_from_string
@@ -139,6 +137,10 @@ class AdminoMixin(ModelAdmin):
                     data[field] = field_method(obj)
                 else:
                     data[field] = field_method
+
+        info = self.model._meta.app_label, self.model._meta.model_name
+        admin_detail_url = str(reverse_lazy("admin:%s_%s_change" % info, args=(obj.id,)))
+        data["admin_detail_url"] = admin_detail_url
         return data
 
     def get_api_list_view_class(self):

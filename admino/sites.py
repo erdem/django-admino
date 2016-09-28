@@ -6,8 +6,6 @@ from admino.views import ChangeListRetrieveAPIView, APIMetaView
 
 from django import http
 from django.conf import settings
-from django.contrib.admin import AdminSite, ModelAdmin
-from django.contrib.admin.options import IncorrectLookupParameters
 from django.conf.urls import url, include
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core import serializers
@@ -15,10 +13,15 @@ from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from django.contrib.admin import actions
+from django.contrib.admin import site as django_site
+from django.contrib.admin import AdminSite as DjangoAdminSite, ModelAdmin as DjangoModelAdmin, autodiscover as django_admin_autodiscover
+from django.contrib.admin.options import IncorrectLookupParameters
+
 from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(ModelAdmin):
+class AdminoMixin(DjangoModelAdmin):
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
 
     def get_api_urls(self):
@@ -183,14 +186,21 @@ class AdminoMixin(ModelAdmin):
         return HttpResponse("delete")
 
 
-class ModelAdmino(AdminoMixin, ModelAdmin):
+class ModelAdmino(AdminoMixin, DjangoModelAdmin):
     admin_type = "admino"
 
 
-class AdminoSite(AdminSite):
-    def activated(self, site_obj):
-        django_admin_registered_apps = site_obj._registry
+class AdminoSite(DjangoAdminSite):
+
+    def __init__(self, django_site, name='admino'):
+        self.django_site = django_site
         self._registry = {}
+        self.name = name
+        self._actions = {'delete_selected': actions.delete_selected}
+        self._global_actions = self._actions.copy()
+
+    def activated(self):
+        django_admin_registered_apps = self.django_site._registry
         for model, admin_obj in django_admin_registered_apps.items():
             mixin_class = AdminoMixin
             if hasattr(settings, "ADMINO_MIXIN_CLASS"):
@@ -200,6 +210,8 @@ class AdminoSite(AdminSite):
             admino_class = type("ModelAdmino", (mixin_class, django_admin_class), {"admin_type": "admino"})
             admino_obj = admino_class(model, self)
             self._registry[model] = admino_obj
+
+        django_admin_autodiscover()
         return self
 
     def get_urls(self):
@@ -214,6 +226,6 @@ class AdminoSite(AdminSite):
                 valid_app_labels.append(model._meta.app_label)
         return urlpatterns
 
+site = AdminoSite(django_site=django_site)
 
-site = AdminoSite()
 

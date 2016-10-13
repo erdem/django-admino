@@ -18,11 +18,17 @@ class BasicModel(AdminoModel):
         help_text=_("Text description.")
     )
 
+    def __str__(self):
+        return self.text
+
 
 # Related Fields Test Models
 
 class ForeignKeyTarget(AdminoModel):
     name = models.CharField(max_length=255, verbose_name=_("Name"))
+
+    def __str__(self):
+        return self.name
 
 
 class ForeignKeySource(AdminoModel):
@@ -41,6 +47,9 @@ class NullForeignKeySource(AdminoModel):
 class ManyToManyTarget(AdminoModel):
     name = models.CharField(max_length=255, verbose_name=_("Name"))
 
+    def __str__(self):
+        return self.name
+
 
 class ManyToManySource(AdminoModel):
     name = models.CharField(max_length=255)
@@ -54,6 +63,9 @@ class NullManyToManySource(AdminoModel):
 
 class OneToOneTarget(AdminoModel):
     name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class OneToOneSource(AdminoModel):

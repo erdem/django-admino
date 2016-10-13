@@ -69,3 +69,31 @@ class NullOneToOneSource(AdminoModel):
 
 # Individual Fields Test Models
 
+
+class NumberSource(AdminoModel):
+    integer = models.IntegerField()
+    null_integer = models.IntegerField(null=True)
+
+    positive_integer = models.PositiveIntegerField()
+    float = models.FloatField()
+    decimal = models.DecimalField(max_digits=4, decimal_places=2)
+
+
+class TextSource(AdminoModel):
+    char = models.CharField(max_length=255)
+    blank_char = models.CharField(max_length=255, blank=True)
+
+    text = models.TextField()
+    slug = models.SlugField()
+
+
+class DateSource(AdminoModel):
+    datetime = models.DateTimeField()
+    null_datetime = models.DateTimeField(null=True)
+
+    time = models.TimeField()
+    date = models.DateField()
+
+
+
+

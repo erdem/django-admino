@@ -1,11 +1,11 @@
-###Django Admino (Alpha)
+### Django Admino (Alpha)
 
 Admino is a django package that provides a REST API for admin endpoints. It allows you to customize django admin panel.
 
 http://admino.io
 
 
-###Problem?
+### Problem?
 
 Django admin is good solution for development tests and i/o, but django admin needs to be more customizable and extendable. 
 

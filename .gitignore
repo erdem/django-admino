@@ -61,7 +61,7 @@ docs/_build/
 
 # PyBuilder
 target/
-notes/*
+notes/
 #Ipython Notebook
 .ipynb_checkpoints
 django/

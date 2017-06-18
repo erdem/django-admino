@@ -3,8 +3,31 @@ from urllib import urlencode
 
 from admino.serializers import ModelAdminSerializer
 from django.core.urlresolvers import reverse_lazy
+from django.http.response import HttpResponse
 from django.http import JsonResponse
 from django.views.generic import View
+
+# from django.contrib.admin.forms import AdminAuthenticationForm
+
+
+class LoginAPIView(View):
+    # authenticate_form = AdminAuthenticationForm
+
+    def post(self, request, *args, **kwargs):
+        print request.POST
+        return HttpResponse("login", status=404)
+
+
+class LogoutAPIView(View):
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse("logout")
+
+
+class PasswordChangeAPIView(View):
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponse("pasword_change")
 
 
 class APIView(View):

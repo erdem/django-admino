@@ -2,7 +2,7 @@ import json
 from functools import update_wrapper
 
 from admino.utils import import_from_string
-from admino.views import ChangeListRetrieveAPIView, APIMetaView
+from admino.views import ChangeListRetrieveAPIView, APIMetaView, LoginAPIView
 
 from django import http
 from django.conf import settings
@@ -217,6 +217,12 @@ class AdminoSite(DjangoAdminSite):
     def get_urls(self):
         urlpatterns = super(AdminoSite, self).get_urls()
         valid_app_labels = []
+        default_api_urls = [
+            url(r'^api/login/$', self.api_login, name='api_login'),
+            # url(r'^logout/$', wrap(self.logout), name='logout'),
+            # url(r'^password_change/$', wrap(self.password_change, cacheable=True), name='password_change'),
+        ]
+        urlpatterns = urlpatterns + default_api_urls
         for model, model_admin in self._registry.items():
             api_urlpatterns = [
                 url(r'^api/%s/%s/' % (model._meta.app_label, model._meta.model_name), include(model_admin.api_urls)),
@@ -224,7 +230,11 @@ class AdminoSite(DjangoAdminSite):
             urlpatterns = urlpatterns + api_urlpatterns
             if model._meta.app_label not in valid_app_labels:
                 valid_app_labels.append(model._meta.app_label)
+
         return urlpatterns
+
+    def api_login(self, request, *args, **kwargs):
+        return LoginAPIView.post(request, *args, **kwargs)
 
 site = AdminoSite(django_site=django_site)
 

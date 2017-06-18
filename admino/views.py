@@ -1,3 +1,4 @@
+import json
 from collections import OrderedDict
 from urllib import urlencode
 
@@ -7,15 +8,20 @@ from django.http.response import HttpResponse
 from django.http import JsonResponse
 from django.views.generic import View
 
-# from django.contrib.admin.forms import AdminAuthenticationForm
-
 
 class LoginAPIView(View):
-    # authenticate_form = AdminAuthenticationForm
-
     def post(self, request, *args, **kwargs):
-        print request.POST
-        return HttpResponse("login", status=404)
+        from django.contrib.admin.forms import AdminAuthenticationForm
+        auth_form = AdminAuthenticationForm(data=json.loads(request.body))
+        if auth_form.is_valid():
+            response_data = {
+                "authenticated": True
+            }
+        else:
+            response_data = {
+                "authenticated": False
+            }
+        return JsonResponse(response_data)
 
 
 class LogoutAPIView(View):

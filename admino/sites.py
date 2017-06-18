@@ -234,7 +234,7 @@ class AdminoSite(DjangoAdminSite):
         return urlpatterns
 
     def api_login(self, request, *args, **kwargs):
-        return LoginAPIView.post(request, *args, **kwargs)
+        return LoginAPIView.as_view()(request, *args, **kwargs)
 
 site = AdminoSite(django_site=django_site)
 

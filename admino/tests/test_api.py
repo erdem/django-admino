@@ -9,6 +9,7 @@ class LoginViewUnitTests(TestCase):
         USERNAME = "admin"
         PASSWORD = "password"
         EMAIL = "admin@admin.com"
+
         User.objects.create_superuser(USERNAME, EMAIL, PASSWORD)
         response = self.client.post(
             "/admin/api/login/",
@@ -18,3 +19,4 @@ class LoginViewUnitTests(TestCase):
             }),
             content_type="application/json")
         self.assertEqual(response.status_code, 200)
+        self.assertDictEqual(json.loads(response.content), {"authenticated": True})

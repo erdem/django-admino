@@ -12,15 +12,17 @@ from django.views.generic import View
 class LoginAPIView(View):
     def post(self, request, *args, **kwargs):
         from django.contrib.admin.forms import AdminAuthenticationForm
+
         auth_form = AdminAuthenticationForm(data=json.loads(request.body))
-        if auth_form.is_valid():
-            response_data = {
-                "authenticated": True
-            }
-        else:
+        if not auth_form.is_valid():
             response_data = {
                 "authenticated": False
             }
+            return JsonResponse(response_data, 401)
+
+        response_data = {
+            "authenticated": True
+        }
         return JsonResponse(response_data)
 
 

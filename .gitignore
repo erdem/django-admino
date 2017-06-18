@@ -64,3 +64,4 @@ target/
 notes/*
 #Ipython Notebook
 .ipynb_checkpoints
+django/

@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from urllib import urlencode
 
-from admino.serializers import ModelAdminSerializer
+from admino.serializers import ModelAdminSerializer, FormSerializer
 from django.core.urlresolvers import reverse_lazy
 from django.http.response import HttpResponse
 from django.http import JsonResponse
@@ -10,6 +10,7 @@ from django.views.generic import View
 
 
 class LoginAPIView(View):
+
     def post(self, request, *args, **kwargs):
         from django.contrib.admin.forms import AdminAuthenticationForm
 
@@ -21,8 +22,9 @@ class LoginAPIView(View):
             return JsonResponse(response_data, 401)
 
         response_data = {
-            "authenticated": True
+            "authenticated": True,
         }
+        print response_data
         return JsonResponse(response_data)
 
 

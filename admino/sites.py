@@ -1,6 +1,7 @@
 import json
 from functools import update_wrapper
 
+from admino.serializers import ModelSchema
 from admino.utils import import_from_string
 from admino.views import ChangeListRetrieveAPIView, APIMetaView, LoginAPIView
 
@@ -10,7 +11,7 @@ from django.conf.urls import url, include
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core import serializers
 from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.admin import actions
@@ -23,6 +24,7 @@ from .constants import HTTP_METHOD_VIEWS
 
 class AdminoMixin(DjangoModelAdmin):
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
+    api_schema = ModelSchema
 
     def get_api_urls(self):
 
@@ -94,56 +96,26 @@ class AdminoMixin(DjangoModelAdmin):
         except IncorrectLookupParameters:
             raise Exception("IncorrectLookupParameters")
 
-    def get_model_admin_field_names(self, request, obj):
-        """
-            This method return admin class readonly custom fields.
-            Getting ModelAdmin list_display + readonly_fields
-        """
-        return set(list(self.get_readonly_fields(request, obj)) + list(self.get_list_display(request)))
+    def get_model_serializer_fields(self):
+        field_names = []
+        for field in self.model._meta.get_fields():
+            if not field.is_relation:
+                field_names.append(field.name)
+        return field_names
 
-    def serialize_objs(self, objs):
-        data_objs = json.loads(serializers.serialize('json', objs))
-        for data in data_objs:
-            data.update(data["fields"])
-            del data["fields"]
-        return data_objs
+    def get_serializer_fields(self, request, obj=None):
+        model_fields = self.get_model_serializer_fields()
+        return model_fields
 
-    def serialize_obj(self, obj):
-        return self.serialize_objs([obj])[0]
+    def serialize_obj(self, request, obj):
+        serializer_fields = self.get_serializer_fields(request, obj)
 
-    def obj_as_dict(self, request, obj):
-        data = self.serialize_obj(obj)
+        class ObjSchema(self.api_schema):
+            class Meta:
+                fields = serializer_fields
 
-        # serialize model instance fields datas
-        for field in obj._meta.get_fields():
-            if field.is_relation and field.concrete:
-                field_value = getattr(obj, field.name)
-                if field_value:
-                    if field.many_to_many:
-                        data[field.name] = self.serialize_objs(field_value.all())
-                    elif field.many_to_one or field.one_to_one or field.one_to_many:
-                        data[field.name] = self.serialize_obj(field_value)
-
-        # add custom admin class field to serialized bundle
-        model_admin_fields = self.get_model_admin_field_names(request, obj)
-        for field in model_admin_fields:
-            if field in data:
-                continue
-
-            if hasattr(obj, field):
-                f = getattr(obj, field)
-                data[field] = unicode(f)
-
-            if hasattr(self, field):
-                field_method = getattr(self, field)
-                if callable(field_method):
-                    data[field] = field_method(obj)
-                else:
-                    data[field] = field_method
-
-        info = self.model._meta.app_label, self.model._meta.model_name
-        admin_detail_url = str(reverse_lazy("admin:%s_%s_change" % info, args=(obj.id,)))
-        data["admin_detail_url"] = admin_detail_url
+        schema = ObjSchema()
+        data, errors = schema.dump(obj)
         return data
 
     def get_api_list_view_class(self):
@@ -159,10 +131,8 @@ class AdminoMixin(DjangoModelAdmin):
 
     def api_detail(self, request, *args, **kwargs):
         obj = self.get_object(request, object_id=kwargs.get("pk"))
-        ModelForm = self.get_form(request, obj=obj)
-        form = ModelForm(instance=obj)
-        data = self.obj_as_dict(request, form.instance)
-        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
+        data = self.serialize_obj(request, obj)
+        return JsonResponse(data)
 
     def api_create(self, request, *args, **kwargs):
         data = json.loads(request.body)
@@ -171,13 +141,13 @@ class AdminoMixin(DjangoModelAdmin):
         form = ModelForm(data=data, files=request.FILES)
         if form.is_valid():
             obj = form.save()
-            data = self.obj_as_dict(request, obj)
-            return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type="application/json")
+            data = self.serialize_obj(request, obj)
+            return JsonResponse(data)
         else:
             errors = {
                 "errors": json.loads(form.errors.as_json())
             }
-            return HttpResponse(json.dumps(errors), status=400, content_type="application/json")
+            return JsonResponse(errors, status=400)
 
     def api_update(self, request, *args, **kwargs):
         return HttpResponse("put")

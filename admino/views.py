@@ -24,7 +24,6 @@ class LoginAPIView(View):
         response_data = {
             "authenticated": True,
         }
-        print response_data
         return JsonResponse(response_data)
 
 
@@ -75,7 +74,7 @@ class ChangeListRetrieveAPIView(APIView):
         self.model = admin_cl.model
         results = []
         for obj in admin_cl.result_list:
-            results.append(model_admin.obj_as_dict(request, obj))
+            results.append(model_admin.serialize_obj(request, obj))
 
         data = OrderedDict()
         data["count"] = admin_cl.result_count

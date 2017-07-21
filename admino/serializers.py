@@ -5,6 +5,14 @@ from django import forms
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
 
+from marshmallow import Schema
+
+
+class ModelSchema(Schema):
+
+    class Meta:
+        strict = True
+
 
 def obj_as_dict(o):
 
@@ -88,7 +96,7 @@ MODEL_ADMIN_CLASS_ATTRIBUTES = (
     "raw_id_fields", "fields", "exclude", "fieldsets", "filter_vertical", "filter_horizontal", "radio_fields",
     "prepopulated_fields",  "readonly_fields", "ordering", "view_on_site",
     "show_full_result_count", "list_display", "list_display_links", "list_filter", "list_per_page", "list_max_show_all",
-    "list_editable", "search_fields", "date_hierarchy","save_as", "save_on_top")
+    "list_editable", "search_fields", "date_hierarchy", "save_as", "save_on_top")
 
 
 class ModelAdminSerializer(BaseSerializer):

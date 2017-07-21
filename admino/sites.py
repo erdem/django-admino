@@ -3,14 +3,11 @@ from functools import update_wrapper
 
 from admino.serializers import ModelSchema
 from admino.utils import import_from_string
-from admino.views import ChangeListRetrieveAPIView, APIMetaView, LoginAPIView
+from admino.views import ChangeListRetrieveAPIView, LoginAPIView
 
 from django import http
 from django.conf import settings
 from django.conf.urls import url, include
-from django.core.serializers.json import DjangoJSONEncoder
-from django.core import serializers
-from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -45,7 +42,7 @@ class AdminoMixin(DjangoModelAdmin):
                 wrap(self.admin_site.admin_view(self.dispatch)),
                 name='%s_%s_api_detail' % info),
             url(r'^meta/$',
-                wrap(self.admin_site.admin_view(self.api_meta_view)),
+                wrap(self.admin_site.admin_view(self.api_admin_meta_view)),
                 name='%s_%s_api_meta' % info),
         ]
         return urlpatterns
@@ -121,8 +118,12 @@ class AdminoMixin(DjangoModelAdmin):
     def get_api_list_view_class(self):
         return ChangeListRetrieveAPIView
 
-    def api_meta_view(self, request, *args, **kwargs):
-        return APIMetaView().get(request, model_admin=self)
+    def api_admin_meta_view(self, request, *args, **kwargs):
+        meta_data = {
+            "list_per_page": self.list_per_page,
+            "list_max_show_all": self.list_max_show_all
+        }
+        return JsonResponse(meta_data)
 
     def api_list(self, request, *args, **kwargs):
         cl = self.get_admin_cl(request)

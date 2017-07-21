@@ -2,7 +2,6 @@ import json
 from collections import OrderedDict
 from urllib import urlencode
 
-from admino.serializers import ModelAdminSerializer, FormSerializer
 from django.core.urlresolvers import reverse_lazy
 from django.http.response import HttpResponse
 from django.http import JsonResponse
@@ -81,14 +80,6 @@ class ChangeListRetrieveAPIView(APIView):
         data["next"] = self.get_api_next_url(request, admin_cl)
         data["previous"] = self.get_api_previous_url(request, admin_cl)
         data["results"] = results
-        return self.json_response(data)
-
-
-class APIMetaView(APIView):
-
-    def get(self, request, model_admin, *args, **kwargs):
-        form = model_admin.get_form(request)
-        data = ModelAdminSerializer(model_admin=model_admin, admin_form=form).data
         return self.json_response(data)
 
 

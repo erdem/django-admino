@@ -2,7 +2,7 @@ import json
 from functools import update_wrapper
 
 from admino.serializers import ModelSchema
-from admino.utils import import_from_string
+from admino.utils import import_from_string, modelschema_factory
 from admino.views import ChangeListRetrieveAPIView, LoginAPIView
 
 from django import http
@@ -19,9 +19,11 @@ from django.contrib.admin.options import IncorrectLookupParameters
 from .constants import HTTP_METHOD_VIEWS
 
 
-class AdminoMixin(DjangoModelAdmin):
+class AdminoMixin(object):
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
     api_schema = ModelSchema
+    api_fields = None
+    api_exclude = None
 
     def get_api_urls(self):
 
@@ -52,13 +54,13 @@ class AdminoMixin(DjangoModelAdmin):
 
     api_urls = property(api_urls)
 
-    def _allowed_methods(self):
+    def _api_allowed_methods(self):
         return [m.upper() for m in self.http_method_names if hasattr(self, "api_" + m)]
 
     def http_method_not_allowed(self, request, *args, **kwargs):
-        if settings.DEBUG and self._allowed_methods():
-            raise Exception("Only" + str(self._allowed_methods()))
-        return http.HttpResponseNotAllowed(self._allowed_methods())
+        if settings.DEBUG and self._api_allowed_methods():
+            raise Exception("Only %s HTTP methods allowed" % str(self._api_allowed_methods()))
+        return http.HttpResponseNotAllowed(self._api_allowed_methods())
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -81,7 +83,7 @@ class AdminoMixin(DjangoModelAdmin):
         else:
             return self.api_list(request, *args, **kwargs)
 
-    def get_admin_cl(self, request):
+    def get_admin_changelist_obj(self, request):
         ChangeList = self.get_changelist(request)
         try:
             cl = ChangeList(request, self.model, self.list_display,
@@ -93,25 +95,53 @@ class AdminoMixin(DjangoModelAdmin):
         except IncorrectLookupParameters:
             raise Exception("IncorrectLookupParameters")
 
-    def get_model_serializer_fields(self):
-        field_names = []
+    def get_api_exclude(self, request, obj):
+        return self.api_exclude
+
+    def get_api_fields(self, request, obj):
+        if self.api_fields:
+            return self.api_fields
+
+        api_fields = []
         for field in self.model._meta.get_fields():
             if not field.is_relation:
-                field_names.append(field.name)
-        return field_names
+                api_fields.append(field.name)
+        return api_fields
 
-    def get_serializer_fields(self, request, obj=None):
-        model_fields = self.get_model_serializer_fields()
-        return model_fields
+    def get_api_schema(self, request, obj=None, **kwargs):
+        """
+            Returns a Marshmallow Schema class for use in the api.
+        """
+
+        if 'api_fields' in kwargs:
+            fields = kwargs.pop('api_fields')
+        else:
+            fields = self.get_api_fields(request, obj)
+
+        excluded = self.get_api_exclude(request, obj)
+        exclude = [] if excluded is None else list(excluded)
+
+        if excluded is None and hasattr(self.api_schema, '_meta') and self.api_schema._meta.exclude:
+            # Take the custom Schema Meta.exclude and extend with modeladmin `api_exclude` fields
+            exclude.extend(self.api_schema._meta.exclude)
+
+        # if exclude is an empty list we pass None to be consistent with the
+        # default on modelschema_factory
+        exclude = exclude or None
+
+        schema = type(self.api_schema.__name__, (self.api_schema,), {})
+
+        defaults = {
+            "schema": schema,
+            "fields": fields,
+            "exclude": exclude
+        }
+        defaults.update(kwargs)
+        return modelschema_factory(self.model, **defaults)
 
     def serialize_obj(self, request, obj):
-        serializer_fields = self.get_serializer_fields(request, obj)
-
-        class ObjSchema(self.api_schema):
-            class Meta:
-                fields = serializer_fields
-
-        schema = ObjSchema()
+        ModelSchema = self.get_api_schema(request, obj)
+        schema = ModelSchema()
         data, errors = schema.dump(obj)
         return data
 
@@ -126,7 +156,7 @@ class AdminoMixin(DjangoModelAdmin):
         return JsonResponse(meta_data)
 
     def api_list(self, request, *args, **kwargs):
-        cl = self.get_admin_cl(request)
+        cl = self.get_admin_changelist_obj(request)
         view_class = self.get_api_list_view_class()
         return view_class().get(request, model_admin=self, admin_cl=cl)
 
@@ -177,8 +207,8 @@ class AdminoSite(DjangoAdminSite):
             if hasattr(settings, "ADMINO_MIXIN_CLASS"):
                 module_path = getattr(settings, "ADMINO_MIXIN_CLASS")
                 mixin_class = import_from_string(module_path)
-            django_admin_class = admin_obj.__class__
-            admino_class = type("ModelAdmino", (mixin_class, django_admin_class), {"admin_type": "admino"})
+            django_admin_class = admin_obj.__class__.__name__
+            admino_class = type(django_admin_class, (admin_obj.__class__, mixin_class), {"admin_class_type": "admino"})
             admino_obj = admino_class(model, self)
             self._registry[model] = admino_obj
 

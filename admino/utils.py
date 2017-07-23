@@ -18,7 +18,7 @@ def import_from_string(module_path):
         raise ImportError(msg)
 
 
-def modelschema_factory(model, schema=Schema, fields=None, exclude=None, strict=True, ordered=True):
+def modelschema_factory(model, schema=Schema, fields=None, exclude=None, strict=True, ordered=True, **kwargs):
     attrs = {'model': model}
     if fields is not None:
         attrs['fields'] = fields
@@ -41,6 +41,7 @@ def modelschema_factory(model, schema=Schema, fields=None, exclude=None, strict=
     form_class_attrs = {
         'Meta': Meta
     }
+    form_class_attrs.update(kwargs)
 
     if (getattr(Meta, 'fields', None) is None and
             getattr(Meta, 'exclude', None) is None):

@@ -71,9 +71,7 @@ class ChangeListRetrieveAPIView(APIView):
 
     def get(self, request, model_admin, admin_cl, *args, **kwargs):
         self.model = admin_cl.model
-        results = []
-        for obj in admin_cl.result_list:
-            results.append(model_admin.serialize_obj(request, obj))
+        results = model_admin.serialize_obj(request, admin_cl.result_list)
 
         data = OrderedDict()
         data["count"] = admin_cl.result_count

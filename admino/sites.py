@@ -21,7 +21,8 @@ from .constants import HTTP_METHOD_VIEWS
 
 class AdminoMixin(object):
     http_method_names = ['get', 'post', 'put', 'delete', 'head', 'options', 'trace']
-    api_schema = ModelSchema
+    api_detail_schema = ModelSchema
+    api_list_schema = None
     api_fields = None
     api_exclude = None
 
@@ -108,7 +109,15 @@ class AdminoMixin(object):
                 api_fields.append(field.name)
         return api_fields
 
-    def get_api_schema(self, request, obj=None, **kwargs):
+    def get_detail_schema_class(self, request, obj):
+        return self.api_detail_schema
+
+    def get_list_schema_class(self, request, obj):
+        if self.api_list_schema:
+            return self.api_list_schema
+        return self.get_detail_schema_class(request, obj)
+
+    def get_api_schema(self, request, obj=None, many=False, **kwargs):
         """
             Returns a Marshmallow Schema class for use in the api.
         """
@@ -118,23 +127,28 @@ class AdminoMixin(object):
         else:
             fields = self.get_api_fields(request, obj)
 
+        if many:
+            api_schema = self.get_list_schema_class(request, obj)
+        else:
+            api_schema = self.get_detail_schema_class(request, obj)
+
         excluded = self.get_api_exclude(request, obj)
         exclude = [] if excluded is None else list(excluded)
 
-        if excluded is None and hasattr(self.api_schema, '_meta') and self.api_schema._meta.exclude:
+        if excluded is None and hasattr(api_schema, '_meta') and api_schema._meta.exclude:
             # Take the custom Schema Meta.exclude and extend with modeladmin `api_exclude` fields
-            exclude.extend(self.api_schema._meta.exclude)
+            exclude.extend(api_schema._meta.exclude)
 
         # if exclude is an empty list we pass None to be consistent with the
         # default on modelschema_factory
         exclude = exclude or None
 
-        schema = type(self.api_schema.__name__, (self.api_schema,), {})
+        schema = type(api_schema.__name__, (api_schema,), {})
 
         defaults = {
             "schema": schema,
             "fields": fields,
-            "exclude": exclude
+            "exclude": exclude,
         }
         defaults.update(kwargs)
         return modelschema_factory(self.model, **defaults)
